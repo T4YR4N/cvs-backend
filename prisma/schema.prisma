@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Sbom {
+  id         String   @id @default(uuid())
+  prettyName String
+  createdAt  DateTime @default(now())
+  scans      Scan[]
+}
+
+model Scan {
+  id        String     @id @default(uuid())
+  sbomId    String
+  sbom      Sbom       @relation(fields: [sbomId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  includes  Chunk[]
+  status    ScanStatus
+}
+
+model Chunk {
+  scanId      String
+  scan        Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  detailsHash String
+  vulnId      String
+  artifactId  String
+  match       Match     @relation(fields: [detailsHash, vulnId, artifactId], references: [detailsHash, vulnId, artifactId])
+  type        ChunkType
+  createdAt   DateTime  @default(now())
+
+  @@id([scanId, detailsHash, vulnId, artifactId])
+}
+
+model Match {
+  detailsHash String
+  details     Json
+  vulnId      String
+  artifactId  String
+  createdAt   DateTime @default(now())
+
+  includedIn Chunk[]
+  vuln       Vuln     @relation(fields: [vulnId], references: [id], onDelete: Cascade)
+  artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@id([vulnId, artifactId, detailsHash])
+}
+
+model Artifact {
+  id        String   @id
+  value     Json
+  createdAt DateTime @default(now())
+
+  matches Match[]
+}
+
+model Vuln {
+  id           String   @id
+  newVersionId String?  @unique
+  newVersion   Vuln?    @relation("NewVersion", fields: [newVersionId], references: [id])
+  value        Json
+  createdAt    DateTime @default(now())
+
+  oldVersion Vuln? @relation("NewVersion")
+
+  matches Match[]
+}
+
+enum ChunkType {
+  ADDITION
+  REMOVAL
+}
+
+enum ScanStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
