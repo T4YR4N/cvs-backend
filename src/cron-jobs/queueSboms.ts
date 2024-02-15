@@ -44,8 +44,6 @@ const queueSbomsCronJob = cron.schedule('* * * * * *', async () => {
             })),
         })
 
-        console.log(x)
-
         x.forEach(({ id }) => {
             scanQueue.enqueue(id)
         })

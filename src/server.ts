@@ -1,3 +1,4 @@
+import bodyParser from 'body-parser'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express, { Express } from 'express'
@@ -12,6 +13,7 @@ import requestLogger from '@common/middleware/requestLogger'
 import { getCorsOrigin } from '@common/utils/envConfig'
 import { healthCheckRouter } from '@modules/healthCheck/healthCheckRouter'
 import { sbomRouter } from '@modules/sbom/sbomRouter'
+import { scanRouter } from '@modules/scan/scanRouter'
 
 dotenv.config({
     path: path.resolve(__dirname, '../.env'),
@@ -29,9 +31,16 @@ app.use(rateLimiter)
 // Request logging
 app.use(requestLogger())
 
+// Parse JSON bodies
+app.use(bodyParser.json({ limit: '50mb' }))
+
+// Parse URL-encoded bodies
+app.use(bodyParser.urlencoded({ extended: true }))
+
 // Routes
 app.use('/health-check', healthCheckRouter)
 app.use('/sboms', sbomRouter)
+app.use('/scans', scanRouter)
 
 // Swagger UI
 app.use(openAPIRouter)

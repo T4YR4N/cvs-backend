@@ -2,9 +2,10 @@ import { OpenApiGeneratorV3, OpenAPIRegistry } from '@asteasolutions/zod-to-open
 
 import { healthCheckRegistry } from '@modules/healthCheck/healthCheckRouter'
 import { sbomRegistry } from '@modules/sbom/sbomRouter'
+import { scanRegistry } from '@modules/scan/scanRouter'
 
 export function generateOpenAPIDocument() {
-    const registry = new OpenAPIRegistry([healthCheckRegistry, sbomRegistry])
+    const registry = new OpenAPIRegistry([healthCheckRegistry, sbomRegistry, scanRegistry])
     const generator = new OpenApiGeneratorV3(registry.definitions)
 
     return generator.generateDocument({

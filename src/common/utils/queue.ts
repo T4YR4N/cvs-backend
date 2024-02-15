@@ -32,6 +32,11 @@ class Queue<T> {
         }
     }
 
+    /**
+     * It dequeues the first element in the queue and returns it. If the parameter beforeDequeueing is provided, it will be called with the element as aparameter before the element is dequeued, providing the element to be dequeued is not undefined.
+     * @param beforeDequeueing - A function that will be called with the element to be dequeued as a parameter before the element is dequeued.
+     * @returns The first element in the queue.
+     */
     async dequeue(beforeDequeueing?: (value: T) => Promise<void>) {
         if (!this.#HEAD) return
 
