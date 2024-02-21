@@ -23,8 +23,14 @@ export const scanRouter: Router = (() => {
         responses: createApiResponse(z.array(ScanScheamaNoResult), 'Success'),
     })
 
-    router.get('/', async (_req: Request, res: Response) => {
-        const serviceResponse = await scanService.findAll()
+    router.get('/', validateRequest(GetScansSchema), async (req: Request, res: Response) => {
+        const { query } = req as z.infer<typeof GetScansSchema>
+
+        const serviceResponse = await scanService.findAll(
+            query.sbomId,
+            Number(query.limit) || undefined,
+            Number(query.offset) || undefined
+        )
         handleServiceResponse(serviceResponse, res)
     })
 
