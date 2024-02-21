@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Sbom {
+  id         String   @id @default(uuid())
+  prettyName String
+  value      Json
+  createdAt  DateTime @default(now())
+  scans      Scan[]
+}
+
+model Scan {
+  id         String     @id @default(uuid())
+  sbomId     String
+  sbom       Sbom       @relation(fields: [sbomId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  resultHash String?
+  result     Json?
+  status     ScanStatus
+}
+
+enum ScanStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
