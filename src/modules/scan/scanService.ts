@@ -150,37 +150,58 @@ const scan = async () => {
     }
 }
 
-const computeGrypeResultDiffHash = (res: GrypeResult) => {
-    const reducedResult = res.matches.map(({ vulnerability, matchDetails, artifact }) => ({
-        vulnerability: {
-            id: vulnerability.id,
-            severity: vulnerability.severity,
-            cvss: vulnerability.cvss
-                .map((val) => ({
-                    metrics: {
-                        baseScore: val.metrics.baseScore,
-                        exploitabilityScore: val.metrics.exploitabilityScore,
-                        impactScore: val.metrics.impactScore,
-                    },
-                }))
-                .sort((a, b) => {
-                    const aHash = sha256(JSON.stringify(a)).toString()
-                    const bHash = sha256(JSON.stringify(b)).toString()
+type NonPrimitive = { [key: string]: unknown } | unknown[]
+type NonNullUndefined<T> = Exclude<T, null | undefined>
+type SafeNonPrimitive = NonNullUndefined<NonPrimitive>
 
-                    return aHash.localeCompare(bHash)
-                }),
-            fix: vulnerability.fix,
-        },
-        matchDetails: matchDetails
-            .map((md) => ({
-                type: md.type,
-            }))
-            .sort((a, b) => a.type.localeCompare(b.type)),
-        artifact: {
-            name: artifact.name,
-            version: artifact.version,
-        },
-    }))
+const sortJsonByHash = (a: SafeNonPrimitive, b: SafeNonPrimitive) => {
+    const aHash = sha256(JSON.stringify(a)).toString()
+    const bHash = sha256(JSON.stringify(b)).toString()
+
+    return aHash.localeCompare(bHash)
+}
+
+const computeGrypeResultDiffHash = (res: GrypeResult) => {
+    /**
+     * To ensure that the hash of reduced result is the same for every result that is equal the following normalizing measures are taken:
+     * - All strings are converted to lower case
+     * - All strings are trimmed
+     * - All arrays of objects are sorted by the hash of the objects
+     * - All arrays of primitives are sorted by their values
+     */
+    const reducedResult = res.matches
+        .map(({ vulnerability, matchDetails, artifact }) => ({
+            vulnerability: {
+                id: vulnerability.id.toLowerCase().trim(),
+                severity: vulnerability.severity.toLowerCase().trim(),
+                cvss: vulnerability.cvss
+                    .map((val) => ({
+                        metrics: {
+                            baseScore: val.metrics.baseScore,
+                            exploitabilityScore: val.metrics.exploitabilityScore,
+                            impactScore: val.metrics.impactScore,
+                        },
+                    }))
+                    .sort(sortJsonByHash),
+                fix: {
+                    versions: vulnerability.fix.versions.map((v) => v.toLowerCase().trim()).sort(),
+                    state: vulnerability.fix.state.toLowerCase().trim(),
+                },
+            },
+            matchDetails: matchDetails
+                .map((md) => ({
+                    type: md.type.toLowerCase().trim(),
+                }))
+                .sort((a, b) => a.type.localeCompare(b.type)),
+            artifact: {
+                name: artifact.name.toLowerCase().trim(),
+                version: artifact.version.toLowerCase().trim(),
+            },
+        }))
+        .sort(sortJsonByHash)
+
+    // This could be used to generate an array of bytes from the reduced result; However sha256 function only takes strings or WordArrays as input; In case the current implementation is not sufficient this could be used by generating a word array from the byte array.
+    // const resultAsByteArray = new TextEncoder().encode(JSON.stringify(reducedResult))
 
     const resultHash = sha256(JSON.stringify(reducedResult)).toString()
 
