@@ -161,7 +161,7 @@ const sortJsonByHash = (a: SafeNonPrimitive, b: SafeNonPrimitive) => {
     return aHash.localeCompare(bHash)
 }
 
-const computeGrypeResultDiffHash = (res: GrypeResult) => {
+export const computeGrypeResultDiffHash = (res: GrypeResult) => {
     /**
      * To ensure that the hash of reduced result is the same for every result that is equal the following normalizing measures are taken:
      * - All strings are converted to lower case
