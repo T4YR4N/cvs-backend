@@ -13,7 +13,8 @@
     "prepare": "husky install",
     "docker:build": "docker-compose build --no-cache",
     "docker:start": "docker-compose up",
-    "docker:stop": "docker-compose down"
+    "docker:stop": "docker-compose down",
+    "test": "vitest"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^6.3.1",
@@ -30,6 +31,7 @@
     "pino-http": "^9.0.0",
     "prisma": "^5.9.1",
     "swagger-ui-express": "^5.0.0",
+    "vite-tsconfig-paths": "^4.3.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -58,7 +60,8 @@
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.2",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.1"
   },
   "lint-staged": {
     "**/*.{ts,js,json}": [
