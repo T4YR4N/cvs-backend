@@ -1,4 +1,5 @@
 import { Prisma, ScanStatus } from '@prisma/client'
+import axios from 'axios'
 import sha256 from 'crypto-js/sha256'
 import fs from 'fs'
 import { StatusCodes } from 'http-status-codes'
@@ -266,6 +267,31 @@ const insertNewResult = async () => {
                 status: ScanStatus.COMPLETED,
             },
         })
+
+        if (isNew) {
+            const webhooks = await prisma.webhook.findMany()
+
+            webhooks.forEach(async (webhook) => {
+                try {
+                    const { prettyName } = await prisma.sbom.findUniqueOrThrow({
+                        select: {
+                            prettyName: true,
+                        },
+                        where: {
+                            id: sbomId,
+                        },
+                    })
+
+                    const url = `${webhook.url}${webhook.sbomNameInQuery ? `/${encodeURIComponent(prettyName)}` : ''}`
+
+                    await axios.get(url)
+                } catch (err) {
+                    logger.error(`Error sending webhook to ${webhook.url}: ${(err as Error).message}`)
+                }
+            })
+
+            logger.info('New result inserted for sbom', sbomId)
+        }
     })
 
     if (insertedValue) {

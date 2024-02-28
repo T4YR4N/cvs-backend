@@ -14,6 +14,7 @@ import { getCorsOrigin } from '@common/utils/envConfig'
 import { healthCheckRouter } from '@modules/healthCheck/healthCheckRouter'
 import { sbomRouter } from '@modules/sbom/sbomRouter'
 import { scanRouter } from '@modules/scan/scanRouter'
+import { webhookRouter } from '@modules/webhook/webhookRouter'
 
 dotenv.config({
     path: path.resolve(__dirname, '../.env'),
@@ -48,6 +49,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use('/health-check', healthCheckRouter)
 app.use('/sboms', sbomRouter)
 app.use('/scans', scanRouter)
+app.use('/webhook', webhookRouter)
 
 // Swagger UI
 app.use(openAPIRouter)

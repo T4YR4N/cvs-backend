@@ -28,6 +28,13 @@ model Scan {
   status     ScanStatus
 }
 
+model Webhook {
+  id              String   @id @default(uuid())
+  url             String
+  sbomNameInQuery Boolean
+  createdAt       DateTime @default(now())
+}
+
 enum ScanStatus {
   PENDING
   COMPLETED
