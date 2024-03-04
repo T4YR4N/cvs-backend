@@ -20,6 +20,7 @@ export const scanRepository = {
             },
             ...(sbomId ? { where: { sbomId } } : {}),
             ...(limit && offset ? { take: limit, skip: offset } : {}),
+            orderBy: { createdAt: 'desc' },
         })
     },
 }
