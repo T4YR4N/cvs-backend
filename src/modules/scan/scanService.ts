@@ -1,5 +1,6 @@
 import { Prisma, ScanStatus } from '@prisma/client'
 import axios from 'axios'
+import CryptoJS from 'crypto-js'
 import sha256 from 'crypto-js/sha256'
 import fs from 'fs'
 import { StatusCodes } from 'http-status-codes'
@@ -201,10 +202,9 @@ export const computeGrypeResultDiffHash = (res: GrypeResult) => {
         }))
         .sort(sortJsonByHash)
 
-    // This could be used to generate an array of bytes from the reduced result; However sha256 function only takes strings or WordArrays as input; In case the current implementation is not sufficient this could be used by generating a word array from the byte array.
-    // const resultAsByteArray = new TextEncoder().encode(JSON.stringify(reducedResult))
+    const resultAsBytes = CryptoJS.enc.Utf8.parse(JSON.stringify(reducedResult))
 
-    const resultHash = sha256(JSON.stringify(reducedResult)).toString()
+    const resultHash = sha256(resultAsBytes).toString()
 
     return resultHash
 }
