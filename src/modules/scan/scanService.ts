@@ -123,7 +123,7 @@ const grypeScan = async (uuid: string) => {
     }
 
     const path = `./data/sboms/${uuid}.sbom.json`
-    const command = `grype --add-cpes-if-none -o json sbom:'${path}'`
+    const command = `grype -o json sbom:'${path}' -c ./src/conf/grype.yaml`
 
     fs.writeFileSync(path, JSON.stringify(sbom.value))
     const result = await runShellCommand(command)
