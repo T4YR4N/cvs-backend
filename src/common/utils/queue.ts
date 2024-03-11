@@ -32,6 +32,16 @@ class Queue<T> {
         }
     }
 
+    search(value: T) {
+        const search = (node: QueueNode<T> | undefined): boolean => {
+            if (!node) return false
+            if (node.value === value) return true
+            return search(node.next)
+        }
+
+        return search(this.#HEAD)
+    }
+
     /**
      * It dequeues the first element in the queue and returns it. If the parameter beforeDequeueing is provided, it will be called with the element as aparameter before the element is dequeued, providing the element to be dequeued is not undefined.
      * @param beforeDequeueing - A function that will be called with the element to be dequeued as a parameter before the element is dequeued.
