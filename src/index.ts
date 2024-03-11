@@ -2,6 +2,7 @@ import { getPort } from '@common/utils/envConfig'
 import { app, logger } from '@src/server'
 
 import queueSbomsCronJob from './cron-jobs/queueSboms'
+import timeoutScansCronJob from './cron-jobs/scanTimeout'
 
 const port = getPort()
 
@@ -19,6 +20,7 @@ const onCloseSignal = () => {
 }
 
 queueSbomsCronJob.start()
+timeoutScansCronJob.start()
 
 process.on('SIGINT', onCloseSignal)
 process.on('SIGTERM', onCloseSignal)
