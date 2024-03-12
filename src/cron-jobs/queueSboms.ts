@@ -4,7 +4,7 @@ import cron from 'node-cron'
 import prisma from '../../prisma/client'
 import { scanQueue } from '../modules/scan/scanService'
 
-const queueSbomsCronJob = cron.schedule('* * * * * *', async () => {
+const queueSbomsCronJob = cron.schedule('* * * * *', async () => {
     queueSbomsCronJob.stop()
 
     const x = await prisma.sbom.findMany({
