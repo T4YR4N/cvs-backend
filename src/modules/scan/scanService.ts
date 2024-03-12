@@ -62,26 +62,30 @@ export const scanService = {
 export interface GrypeResult {
     matches: {
         vulnerability: {
-            id: string
-            severity: string
-            cvss: {
-                metrics: {
-                    baseScore: number
-                    exploitabilityScore: number
-                    impactScore: number
-                }
-            }[]
-            fix: {
-                versions: string[]
-                state: string
-            }
+            id?: string | undefined
+            severity?: string | undefined
+            cvss?:
+                | {
+                      metrics?: {
+                          baseScore?: number | undefined
+                          exploitabilityScore?: number | undefined
+                          impactScore?: number | undefined
+                      }
+                  }[]
+                | undefined
+            fix?:
+                | {
+                      versions?: string[] | undefined
+                      state?: string | undefined
+                  }
+                | undefined
         }
         matchDetails: {
-            type: string
+            type?: string | undefined
         }[]
         artifact: {
-            name: string
-            version: string
+            name?: string | undefined
+            version?: string | undefined
         }
     }[]
 }
@@ -174,30 +178,30 @@ export const computeGrypeResultDiffHash = (res: GrypeResult) => {
     const reducedResult = res.matches
         .map(({ vulnerability, matchDetails, artifact }) => ({
             vulnerability: {
-                id: vulnerability.id.toLowerCase().trim(),
-                severity: vulnerability.severity.toLowerCase().trim(),
-                cvss: vulnerability.cvss
-                    .map((val) => ({
+                id: vulnerability.id?.toLowerCase().trim() || '',
+                severity: vulnerability.severity?.toLowerCase().trim() || '',
+                cvss: vulnerability?.cvss
+                    ?.map((val) => ({
                         metrics: {
-                            baseScore: val.metrics.baseScore,
-                            exploitabilityScore: val.metrics.exploitabilityScore,
-                            impactScore: val.metrics.impactScore,
+                            baseScore: val.metrics?.baseScore || 0,
+                            exploitabilityScore: val.metrics?.exploitabilityScore || 0,
+                            impactScore: val.metrics?.impactScore || 0,
                         },
                     }))
                     .sort(sortJsonByHash),
                 fix: {
-                    versions: vulnerability.fix.versions.map((v) => v.toLowerCase().trim()).sort(),
-                    state: vulnerability.fix.state.toLowerCase().trim(),
+                    versions: vulnerability.fix?.versions?.map((v) => v.toLowerCase().trim()).sort(),
+                    state: vulnerability.fix?.state?.toLowerCase().trim(),
                 },
             },
             matchDetails: matchDetails
-                .map((md) => ({
-                    type: md.type.toLowerCase().trim(),
+                ?.map((md) => ({
+                    type: md.type?.toLowerCase().trim() || '',
                 }))
                 .sort((a, b) => a.type.localeCompare(b.type)),
             artifact: {
-                name: artifact.name.toLowerCase().trim(),
-                version: artifact.version.toLowerCase().trim(),
+                name: artifact.name?.toLowerCase().trim() || '',
+                version: artifact.version?.toLowerCase().trim() || '',
             },
         }))
         .sort(sortJsonByHash)
@@ -282,7 +286,7 @@ const insertNewResult = async () => {
                         },
                     })
 
-                    const url = `${webhook.url}${webhook.sbomNameInQuery ? `/${encodeURIComponent(prettyName)}` : ''}`
+                    const url = `${webhook.url}${webhook.sbomNameInQuery ? `?sbomName=${encodeURIComponent(prettyName)}` : ''}`
 
                     await axios.get(url)
                 } catch (err) {

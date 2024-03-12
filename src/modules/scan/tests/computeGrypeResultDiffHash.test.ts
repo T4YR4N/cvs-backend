@@ -1,8 +1,33 @@
 import { describe, expect, test } from 'vitest'
 
-import { GrypeResult } from '@modules/scan/scanService'
-
 import { computeGrypeResultDiffHash } from '../scanService'
+
+export interface GrypeResult {
+    matches: {
+        vulnerability: {
+            id: string
+            severity: string
+            cvss: {
+                metrics: {
+                    baseScore: number
+                    exploitabilityScore: number
+                    impactScore: number
+                }
+            }[]
+            fix: {
+                versions: string[]
+                state: string
+            }
+        }
+        matchDetails: {
+            type: string
+        }[]
+        artifact: {
+            name: string
+            version: string
+        }
+    }[]
+}
 
 const testResult = {
     matches: [
