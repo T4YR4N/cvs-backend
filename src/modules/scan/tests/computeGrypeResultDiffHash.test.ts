@@ -1,35 +1,9 @@
 import { describe, expect, test } from 'vitest'
 
 import { computeGrypeResultDiffHash } from '../scanService'
+import { GrypeResult } from '../scanService'
 
-export interface GrypeResult {
-    matches: {
-        vulnerability: {
-            id: string
-            severity: string
-            cvss: {
-                metrics: {
-                    baseScore: number
-                    exploitabilityScore: number
-                    impactScore: number
-                }
-            }[]
-            fix: {
-                versions: string[]
-                state: string
-            }
-        }
-        matchDetails: {
-            type: string
-        }[]
-        artifact: {
-            name: string
-            version: string
-        }
-    }[]
-}
-
-const testResult = {
+const scanResult = {
     matches: [
         {
             vulnerability: {
@@ -211,7 +185,7 @@ const testResult = {
             },
         },
     ],
-} as unknown as GrypeResult
+}
 
 const testHash = 'ff2a9ce7e4b63a376561a57d5f60f76037f6b18edc9608c8e31a36a2551432b6'
 
@@ -233,19 +207,20 @@ const testHash = 'ff2a9ce7e4b63a376561a57d5f60f76037f6b18edc9608c8e31a36a2551432
  * 		- matchDetails.type
  * 		- artifact.name
  * 		- artifact.version
+ * - insensitive to possibly empty fields [done]
  */
 
 describe('computeGrypeResultDiffHash ', () => {
     test('should return the correct hash if a specific result is passed', () => {
-        const hash = computeGrypeResultDiffHash(testResult)
+        const hash = computeGrypeResultDiffHash(scanResult)
 
         expect(hash).toBe(testHash)
     })
 
     test('should return the same hash if the vulnerabilities are in a different order', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
-            matches: [testResult.matches[1], testResult.matches[0]],
+            ...scanResult,
+            matches: [scanResult.matches[1], scanResult.matches[0]],
         }
 
         const hash = computeGrypeResultDiffHash(moddedTestResult)
@@ -255,8 +230,8 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches is not present', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
-            matches: [testResult.matches[0]],
+            ...scanResult,
+            matches: [scanResult.matches[0]],
         }
 
         const hash = computeGrypeResultDiffHash(moddedTestResult)
@@ -372,8 +347,8 @@ describe('computeGrypeResultDiffHash ', () => {
         } as unknown as GrypeResult['matches'][0]
 
         const moddedTestResult: GrypeResult = {
-            ...testResult,
-            matches: [differentCaseFirstResult, testResult.matches[1]],
+            ...scanResult,
+            matches: [differentCaseFirstResult, scanResult.matches[1]],
         }
 
         const hash = computeGrypeResultDiffHash(moddedTestResult)
@@ -488,8 +463,8 @@ describe('computeGrypeResultDiffHash ', () => {
         } as unknown as GrypeResult['matches'][0]
 
         const moddedTestResult: GrypeResult = {
-            ...testResult,
-            matches: [differentCaseFirstResult, testResult.matches[1]],
+            ...scanResult,
+            matches: [differentCaseFirstResult, scanResult.matches[1]],
         }
 
         const hash = computeGrypeResultDiffHash(moddedTestResult)
@@ -498,10 +473,10 @@ describe('computeGrypeResultDiffHash ', () => {
     })
 
     test('should return the same hash if the vulnerabilities are the same, but the fields are in a different order', () => {
-        const { matchDetails, artifact, vulnerability } = testResult.matches[0]
+        const { matchDetails, artifact, vulnerability } = scanResult.matches[0]
 
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
                     matchDetails,
@@ -516,7 +491,7 @@ describe('computeGrypeResultDiffHash ', () => {
                         cvss: vulnerability.cvss,
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -526,10 +501,10 @@ describe('computeGrypeResultDiffHash ', () => {
     })
 
     test('should return the same hash if the vulnerabilities are the same, but all arrays are in a different order', () => {
-        const { matchDetails, artifact, vulnerability } = testResult.matches[0]
+        const { matchDetails, artifact, vulnerability } = scanResult.matches[0]
 
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
                     matchDetails: [matchDetails[1], matchDetails[0]],
@@ -545,7 +520,7 @@ describe('computeGrypeResultDiffHash ', () => {
                         cvss: [vulnerability.cvss[1], vulnerability.cvss[0]],
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -556,16 +531,16 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different vulnerability.id', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     vulnerability: {
-                        ...testResult.matches[0].vulnerability,
+                        ...scanResult.matches[0].vulnerability,
                         id: 'CVE-2023-42367',
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -576,16 +551,16 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different vulnerability.severity', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     vulnerability: {
-                        ...testResult.matches[0].vulnerability,
+                        ...scanResult.matches[0].vulnerability,
                         severity: 'High',
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -596,25 +571,25 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different vulnerability.css.metrics[number].baseScore', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     vulnerability: {
-                        ...testResult.matches[0].vulnerability,
+                        ...scanResult.matches[0].vulnerability,
                         cvss: [
                             {
-                                ...testResult.matches[0].vulnerability.cvss[0],
+                                ...scanResult.matches[0].vulnerability.cvss[0],
                                 metrics: {
-                                    ...testResult.matches[0].vulnerability.cvss[0].metrics,
+                                    ...scanResult.matches[0].vulnerability.cvss[0].metrics,
                                     baseScore: 1,
                                 },
                             },
-                            testResult.matches[0].vulnerability.cvss[1],
+                            scanResult.matches[0].vulnerability.cvss[1],
                         ],
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -625,25 +600,25 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different vulnerability.css.metrics[number].exploitabilityScore', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     vulnerability: {
-                        ...testResult.matches[0].vulnerability,
+                        ...scanResult.matches[0].vulnerability,
                         cvss: [
                             {
-                                ...testResult.matches[0].vulnerability.cvss[0],
+                                ...scanResult.matches[0].vulnerability.cvss[0],
                                 metrics: {
-                                    ...testResult.matches[0].vulnerability.cvss[0].metrics,
+                                    ...scanResult.matches[0].vulnerability.cvss[0].metrics,
                                     exploitabilityScore: 1,
                                 },
                             },
-                            testResult.matches[0].vulnerability.cvss[1],
+                            scanResult.matches[0].vulnerability.cvss[1],
                         ],
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -654,25 +629,25 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different vulnerability.css.metrics[number].impactScore', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     vulnerability: {
-                        ...testResult.matches[0].vulnerability,
+                        ...scanResult.matches[0].vulnerability,
                         cvss: [
                             {
-                                ...testResult.matches[0].vulnerability.cvss[0],
+                                ...scanResult.matches[0].vulnerability.cvss[0],
                                 metrics: {
-                                    ...testResult.matches[0].vulnerability.cvss[0].metrics,
+                                    ...scanResult.matches[0].vulnerability.cvss[0].metrics,
                                     impactScore: 1,
                                 },
                             },
-                            testResult.matches[0].vulnerability.cvss[1],
+                            scanResult.matches[0].vulnerability.cvss[1],
                         ],
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -683,19 +658,19 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different vulnerability.fix.versions', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     vulnerability: {
-                        ...testResult.matches[0].vulnerability,
+                        ...scanResult.matches[0].vulnerability,
                         fix: {
-                            ...testResult.matches[0].vulnerability.fix,
+                            ...scanResult.matches[0].vulnerability.fix,
                             versions: ['1.0', 'second'],
                         },
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -706,19 +681,19 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different vulnerability.fix.state', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     vulnerability: {
-                        ...testResult.matches[0].vulnerability,
+                        ...scanResult.matches[0].vulnerability,
                         fix: {
-                            ...testResult.matches[0].vulnerability.fix,
+                            ...scanResult.matches[0].vulnerability.fix,
                             state: 'fixed',
                         },
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -729,19 +704,19 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different matchDetails[number].type', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     matchDetails: [
                         {
-                            ...testResult.matches[0].matchDetails[0],
+                            ...scanResult.matches[0].matchDetails[0],
                             type: 'exact-indirect-match',
                         },
-                        testResult.matches[0].matchDetails[1],
+                        scanResult.matches[0].matchDetails[1],
                     ],
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -752,16 +727,16 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different artifact.name', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     artifact: {
-                        ...testResult.matches[0].artifact,
+                        ...scanResult.matches[0].artifact,
                         name: 'busybox2',
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
@@ -772,21 +747,35 @@ describe('computeGrypeResultDiffHash ', () => {
 
     test('should return a different hash if one of the matches has a different artifact.version', () => {
         const moddedTestResult: GrypeResult = {
-            ...testResult,
+            ...scanResult,
             matches: [
                 {
-                    ...testResult.matches[0],
+                    ...scanResult.matches[0],
                     artifact: {
-                        ...testResult.matches[0].artifact,
+                        ...scanResult.matches[0].artifact,
                         version: '1.36.1-r16',
                     },
                 },
-                testResult.matches[1],
+                scanResult.matches[1],
             ],
         }
 
         const hash = computeGrypeResultDiffHash(moddedTestResult)
 
         expect(hash).not.toBe(testHash)
+    })
+
+    test('should retrun a hash even if the vulnerability, matchDetails or artifact attributes dont have the expected attributes', () => {
+        const moddedScanResult = {
+            matches: [{ vulnerability: {}, matchDetails: [], artifact: {} }],
+        }
+
+        const testFunc = () => {
+            const hash = computeGrypeResultDiffHash(moddedScanResult)
+
+            expect(hash).toBe('8cf86d7c9d5f48d566a373d7fc951b80a57dfa5c044abd42306dc1897e6a9dd8')
+        }
+
+        expect(testFunc).not.toThrow()
     })
 })
