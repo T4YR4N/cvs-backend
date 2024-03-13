@@ -29,13 +29,6 @@ app.use(cors({ origin: [corsOrigin], credentials: true }))
 app.use(helmet())
 app.use(rateLimiter)
 
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000') // Replace with your frontend URL
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    next()
-})
-
 // Request logging
 app.use(requestLogger())
 

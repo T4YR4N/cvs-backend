@@ -1,12 +1,32 @@
 version: '3.9'
 services:
-  backend-app:
-    build:
-      context: .
-      dockerfile: local.Dockerfile
-    command: '/app/scripts/docker/local-run.sh'
-    ports:
-      - '8080:8080'
-    env_file: .env
-    volumes:
-      - './src:/app/src'
+    db:
+        image: postgres
+        restart: always
+        ports:
+            - '5432:5432'
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: root
+            POSTGRES_DB: vulnScan
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+    backend-app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: always
+        command: '/usr/src/app/start.sh'
+        ports:
+            - '3001:3001'
+        env_file: .env
+        environment:
+            - DATABASE_URL=postgresql://root:root@database:5432/vulnScan
+        depends_on:
+            - db
+        links:
+            - 'db:database'
+        volumes:
+            - './src:/app/src'
+volumes:
+    pgdata:

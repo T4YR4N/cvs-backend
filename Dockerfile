@@ -1,4 +1,4 @@
-FROM node:current-slim
+FROM node:20.11.1-bookworm
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -15,8 +15,11 @@ COPY . .
 # Build the TypeScript files
 RUN npm run build
 
-# Expose port 8080
-EXPOSE 8080
+RUN npx prisma generate
 
-# Start the app
-CMD npm run start
+RUN chmod +x start.sh
+
+RUN curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+# Expose port 8080
+EXPOSE 3001
