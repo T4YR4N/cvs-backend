@@ -86,3 +86,5 @@ A new result is reduced to the following fields:
 -   artifact.version
 
 and a hash of the result is calculated. If the hash is identical to the last one stored in the database, the result is not stored again, but a database entry is created with null values for result and resultHash fields to show that the image was scanned and the result is the same as the previous one. This is done to avoid storing the same or very similar results multiple times. If other fields are required to be checked for your prupose you can add them to the `computeGrypeResultDiffHash` function in the `src/modules/scan/scanService.ts` file.
+
+In case you want a frontend to simplyfiy the usage of the Tool you may have a look at [cvs-frontend](https://github.com/T4YR4N/cvs-frontend).
