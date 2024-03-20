@@ -156,57 +156,49 @@ const scan = async () => {
     }
 }
 
-type NonPrimitive = { [key: string]: unknown } | unknown[]
-type NonNullUndefined<T> = Exclude<T, null | undefined>
-type SafeNonPrimitive = NonNullUndefined<NonPrimitive>
-
-const sortJsonByHash = (a: SafeNonPrimitive, b: SafeNonPrimitive) => {
-    const aHash = sha256(JSON.stringify(a)).toString()
-    const bHash = sha256(JSON.stringify(b)).toString()
-
-    return aHash.localeCompare(bHash)
-}
-
 export const computeGrypeResultDiffHash = (res: GrypeResult) => {
     /**
      * To ensure that the hash of reduced result is the same for every result that is equal the following normalizing measures are taken:
      * - All strings are converted to lower case
      * - All strings are trimmed
-     * - All arrays of objects are sorted by the hash of the objects
-     * - All arrays of primitives are sorted by their values
+     * - The entire result is being put into one array and gets sorted as JSON objects are not specified to be ordered.
      */
-    const reducedResult = res.matches
-        .map(({ vulnerability, matchDetails, artifact }) => ({
-            vulnerability: {
-                id: vulnerability.id?.toLowerCase().trim() || '',
-                severity: vulnerability.severity?.toLowerCase().trim() || '',
-                cvss: vulnerability?.cvss
-                    ?.map((val) => ({
-                        metrics: {
-                            baseScore: val.metrics?.baseScore || 0,
-                            exploitabilityScore: val.metrics?.exploitabilityScore || 0,
-                            impactScore: val.metrics?.impactScore || 0,
-                        },
-                    }))
-                    .sort(sortJsonByHash),
-                fix: {
-                    versions: vulnerability.fix?.versions?.map((v) => v.toLowerCase().trim()).sort(),
-                    state: vulnerability.fix?.state?.toLowerCase().trim(),
-                },
-            },
-            matchDetails: matchDetails
-                ?.map((md) => ({
-                    type: md.type?.toLowerCase().trim() || '',
-                }))
-                .sort((a, b) => a.type.localeCompare(b.type)),
-            artifact: {
-                name: artifact.name?.toLowerCase().trim() || '',
-                version: artifact.version?.toLowerCase().trim() || '',
-            },
-        }))
-        .sort(sortJsonByHash)
 
-    const resultAsBytes = CryptoJS.enc.Utf8.parse(JSON.stringify(reducedResult))
+    const normalizeString = (name: string, str: string | undefined) => `${name}:${str?.toLowerCase().trim() || ''}`
+    const normalizeNumber = (name: string, num: number | undefined) => `${name}:${String(num || 0)}`
+
+    /**
+     * As JSON objects are not ordered the hash of the reduced result is not guaranteed to be the same for equal results.
+     * Therefore all keys will be put into an array and sorted. As they are all just strings there is no need to sort them by their hash.
+     */
+    const newReducedResult = res.matches
+        .reduce((acc, { vulnerability, matchDetails, artifact }) => {
+            const normalizedCve = normalizeString('vulnId', vulnerability.id)
+
+            acc.push(normalizedCve)
+            acc.push(normalizeString('vulnSeverity', vulnerability.severity))
+            vulnerability.cvss?.forEach((val) => {
+                acc.push(normalizeNumber(`vulnCvss${normalizedCve}BaseScore`, val.metrics?.baseScore))
+                acc.push(
+                    normalizeNumber(`vulnCvss${normalizedCve}ExploitabilityScore`, val.metrics?.exploitabilityScore)
+                )
+                acc.push(normalizeNumber(`vulnCvss${normalizedCve}ImpactScore`, val.metrics?.impactScore))
+            })
+            vulnerability.fix?.versions?.forEach((v) => {
+                acc.push(normalizeString(`vulnFixVersion${normalizedCve}`, v))
+            })
+            acc.push(normalizeString('vulnFixState', vulnerability.fix?.state))
+            matchDetails?.forEach((md) => {
+                acc.push(normalizeString(`matchDetailsType${normalizedCve}`, md.type))
+            })
+            acc.push(normalizeString('artifactName', artifact.name))
+            acc.push(normalizeString('artifactVersion', artifact.version))
+
+            return acc
+        }, [] as string[])
+        .sort()
+
+    const resultAsBytes = CryptoJS.enc.Utf8.parse(newReducedResult.join(';'))
 
     const resultHash = sha256(resultAsBytes).toString()
 

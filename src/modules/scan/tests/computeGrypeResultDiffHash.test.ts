@@ -187,7 +187,7 @@ const scanResult = {
     ],
 }
 
-const testHash = 'ff2a9ce7e4b63a376561a57d5f60f76037f6b18edc9608c8e31a36a2551432b6'
+const testHash = '6762c667c0dc42b2e451a7955eb63a7112fb89a904dd09e135b25faa4bb4151c'
 
 /*
  * Requirements:
@@ -765,7 +765,7 @@ describe('computeGrypeResultDiffHash ', () => {
         expect(hash).not.toBe(testHash)
     })
 
-    test('should retrun a hash even if the vulnerability, matchDetails or artifact attributes dont have the expected attributes', () => {
+    test('should return a hash even if the vulnerability, matchDetails or artifact attributes dont have the expected attributes', () => {
         const moddedScanResult = {
             matches: [{ vulnerability: {}, matchDetails: [], artifact: {} }],
         }
@@ -773,7 +773,7 @@ describe('computeGrypeResultDiffHash ', () => {
         const testFunc = () => {
             const hash = computeGrypeResultDiffHash(moddedScanResult)
 
-            expect(hash).toBe('8cf86d7c9d5f48d566a373d7fc951b80a57dfa5c044abd42306dc1897e6a9dd8')
+            expect(hash).toBe('92c2befc84595211d17ae26026242c5f2c31340722e3fb9ffb95a7d0218b0967')
         }
 
         expect(testFunc).not.toThrow()
