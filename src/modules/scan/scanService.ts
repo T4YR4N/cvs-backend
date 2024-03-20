@@ -157,21 +157,18 @@ const scan = async () => {
 }
 
 export const computeGrypeResultDiffHash = (res: GrypeResult) => {
-    /**
-     * To ensure that the hash of reduced result is the same for every result that is equal the following normalizing measures are taken:
-     * - All strings are converted to lower case
-     * - All strings are trimmed
-     * - The entire result is being put into one array and gets sorted as JSON objects are not specified to be ordered.
-     */
-
     const normalizeString = (name: string, str: string | undefined) => `${name}:${str?.toLowerCase().trim() || ''}`
     const normalizeNumber = (name: string, num: number | undefined) => `${name}:${String(num || 0)}`
 
     /**
+     * To ensure that the hash of reduced result is the same for every result that is equal the following normalizing measures are taken:
+     * - All strings are converted to lower case
+     * - All strings are trimmed
+     * - The entire result is being put into one array and gets sorted as JSON objects are not specified to be ordered. \\
      * As JSON objects are not ordered the hash of the reduced result is not guaranteed to be the same for equal results.
      * Therefore all keys will be put into an array and sorted. As they are all just strings there is no need to sort them by their hash.
      */
-    const newReducedResult = res.matches
+    const reducedResult = res.matches
         .reduce((acc, { vulnerability, matchDetails, artifact }) => {
             const normalizedCve = normalizeString('vulnId', vulnerability.id)
 
@@ -198,7 +195,7 @@ export const computeGrypeResultDiffHash = (res: GrypeResult) => {
         }, [] as string[])
         .sort()
 
-    const resultAsBytes = CryptoJS.enc.Utf8.parse(newReducedResult.join(';'))
+    const resultAsBytes = CryptoJS.enc.Utf8.parse(reducedResult.join(';'))
 
     const resultHash = sha256(resultAsBytes).toString()
 
